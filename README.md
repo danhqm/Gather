@@ -2,9 +2,9 @@
 
 A portfolio event platform. The first milestone is a working, database-backed event catalogue: browse fictional events, filter by category/city/price/local dates, and open an event's details.
 
-**Implemented:** ASP.NET Core 10 API, EF Core migrations, PostgreSQL 18, React/TypeScript/Vite frontend, Docker Compose, PostgreSQL integration tests and browser smoke tests.
+**Implemented:** ASP.NET Core 10 API, EF Core migrations, PostgreSQL 18, React/TypeScript/Vite frontend, Docker Compose, customer signup/sign-in, organisation permissions, PostgreSQL integration tests and browser smoke tests.
 
-**Planned:** customer accounts, organiser tools, capacity-safe reservations, sandbox payments, QR admission, OpenAI-assisted search and AWS deployment. These are not available yet. This demo does not accept real bookings.
+**Planned:** organiser event tools, capacity-safe reservations, sandbox payments, QR admission, OpenAI-assisted search and AWS deployment. These are not available yet. This demo does not accept real bookings.
 
 ## Run locally
 
@@ -73,3 +73,15 @@ The local city choices currently share `Asia/Kuala_Lumpur`; adding cities in oth
 This Compose file is for local development, not an AWS deployment configuration. No AWS resources or OpenAI calls are required for this milestone. Keep `.env` outside Git.
 
 References: [Vite prerequisites](https://vite.dev/guide/), [PostgreSQL Docker data persistence](https://docs.docker.com/guides/postgresql/immediate-setup-and-data-persistence/).
+
+## Accounts and permissions
+
+Use **Sign in → Create an account** to register a customer. Passwords require 12–128 characters with uppercase, lowercase, a number and a symbol. Public signup never creates an organisation membership. Login failures use a generic message; five failed attempts lock the account for 15 minutes, and authentication endpoints allow at most 20 requests per IP per minute.
+
+For local organiser/staff accounts, set `DEMO_ACCOUNT_PASSWORD` in `.env` before starting the app. This workspace already has a generated value in that ignored file. Accounts are `organiser@gather.test` and `staff@gather.test`. Restarting does not reset an existing password. Never publish that `.env` file or use these demo accounts for real customer data.
+
+Identity hashes passwords and issues an HttpOnly session cookie. Production cookies require HTTPS. Local Compose uses HTTP on localhost. Every authenticated mutation, signup and login requires the `X-CSRF-TOKEN` header; fetch its current value from `/api/auth/csrf` after an identity change. Keys used to protect cookies persist in the `data_protection_keys` Docker volume. Treat that volume as sensitive; it is not a replacement for production key protection and backup policy.
+
+Email verification and password recovery are not implemented in this portfolio milestone. Use test addresses. Accounts and events persist in the local PostgreSQL volume.
+
+References: [ASP.NET Core Identity](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-10.0), [antiforgery tokens](https://learn.microsoft.com/en-us/aspnet/core/security/anti-request-forgery?view=aspnetcore-10.0).

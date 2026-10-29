@@ -1,29 +1,11 @@
 using System.Net;
 using System.Text.Json;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
-using Testcontainers.PostgreSql;
 
 namespace EventPlatform.Tests;
 
-public sealed class CatalogueTests : IAsyncLifetime
+public sealed class CatalogueTests(WebAppFixture fixture) : IClassFixture<WebAppFixture>
 {
-    private readonly PostgreSqlContainer database = new PostgreSqlBuilder("postgres:18-alpine").Build();
-    private WebApplicationFactory<Program> factory = null!;
-    private HttpClient client = null!;
-    public async Task InitializeAsync()
-    {
-        await database.StartAsync();
-        factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder => builder
-            .UseEnvironment("Testing")
-            .ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string,string?> {
-                ["ConnectionStrings:Database"] = database.GetConnectionString(),
-                ["Database:Initialize"] = "true", ["Demo:Seed"] = "true"
-            })));
-        client = factory.CreateClient();
-    }
-    public async Task DisposeAsync() { client?.Dispose(); if(factory is not null) await factory.DisposeAsync(); await database.DisposeAsync(); }
+    private HttpClient client => fixture.Client;
 
     [Fact]
     public async Task Catalogue_excludes_drafts_and_applies_combined_filters()

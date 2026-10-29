@@ -4,6 +4,22 @@ export type EventSummary = {
 };
 export type EventDetail = EventSummary & { description: string; endsAt: string; capacity: number };
 export type EventPage = { items: EventSummary[]; total: number; page: number; pageSize: number };
+export type Session = { id: string; displayName: string; email: string;
+  memberships: { organisationId: string; organisationName: string; role: string }[] };
+
+export async function mutate<T>(path: string, body: unknown, method = 'POST'): Promise<T> {
+  // Refresh after identity changes: an anonymous CSRF token cannot authenticate a signed-in mutation.
+  const csrf = await get<{ token: string }>('/api/auth/csrf');
+  const response = await fetch(path, { method, headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf.token },
+    body: JSON.stringify(body) });
+  if (!response.ok) {
+    const problem = await response.json().catch(() => null);
+    throw new Error(response.status === 401 ? 'Email or password is incorrect.'
+      : response.status === 429 ? 'Too many attempts. Please wait a minute and try again.'
+      : problem?.detail || 'The request could not be completed. Please try again.');
+  }
+  return response.status === 204 ? undefined as T : response.json() as Promise<T>;
+}
 
 export async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
   const response = await fetch(path, { signal });

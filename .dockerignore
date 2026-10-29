@@ -4,6 +4,7 @@
 **/dist
 .git
 .env
+**/.keys
 .superpowers
 **/test-results
 **/playwright-report

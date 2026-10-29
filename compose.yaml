@@ -23,6 +23,10 @@ services:
       ConnectionStrings__Database: Host=postgres;Database=gather;Username=gather;Password=${POSTGRES_PASSWORD}
       Database__Initialize: "true"
       Demo__Seed: "true"
+      Demo__AccountPassword: ${DEMO_ACCOUNT_PASSWORD:-}
+      DataProtection__KeyPath: /app/keys
+    volumes:
+      - data_protection_keys:/app/keys
     ports:
       - "127.0.0.1:8080:8080"
     depends_on:
@@ -30,3 +34,4 @@ services:
         condition: service_healthy
 volumes:
   postgres_data:
+  data_protection_keys:

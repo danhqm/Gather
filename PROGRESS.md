@@ -13,8 +13,10 @@ Plan: ../event-platform-implementation-plan.md
 - Ruling: expose the date-window helper through a bounded read-only endpoint so the browser and future AI search share server timezone conversion. Cost: one additional API route.
 - Ruling: the first milestone uses fictional Malaysian cities/events in MYR and fixed November 2026 dates. This is demo data, not an inference about the user's location. Add city/timezone mappings and refresh demo dates when needed.
 - Review: fixed one-sided date filtering after reproducing the failure in both browser profiles; all 8 browser checks then passed. Also fixed select label associations after the initial browser checks could not find the controls by their exact labels.
-- Review minor (deferred): extract WebAppFixture and its event helper at the start of Task 2, where authentication tests need shared setup.
+- Review minor (resolved in Task 2): extracted WebAppFixture and CreatePublishedEventAsync for shared database and HTTP setup.
 - Review minor (deferred): pin Docker image digests before deployment; moving major image tags currently permit runtime changes between local builds.
 - Review rulings: later auth/booking/payment/QR/AI/AWS features are not part of the catalogue milestone; local city/currency/date restrictions remain documented; native dialog semantics are retained, with broader keyboard/assistive-technology checks still to come.
-- Task 2: starting. Accounts, cookie authentication, CSRF and per-organisation permissions.
-- Tasks 3–10: pending. OpenAI, payments and AWS account credentials have not been configured.
+- Task 2: complete. Accounts, cookie authentication, CSRF and per-organisation permissions. Initial auth suite failed 5/5 for missing routes; final full API suite passed 12/12, including production Secure-cookie checks and unchanged database state for rejected signup. Docker production build succeeded; all 10 desktop/mobile browser checks passed. A signed-in organiser session survived force-recreating the app container.
+- Task 2 ruling: demo organiser/staff accounts require a generated password in ignored .env; no passwords are hard-coded in source. Reusing a demo email already owned by a different user fails safely instead of granting it permissions. Email verification/recovery remain outside this milestone.
+- Task 3: starting. Organisation-owned event CRUD and publication.
+- Tasks 4–10: pending. OpenAI, payments and AWS account credentials have not been configured.

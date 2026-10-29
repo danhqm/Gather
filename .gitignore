@@ -4,6 +4,7 @@
 *.tsbuildinfo
 **/dist/
 .env
+**/.keys/
 .superpowers/
 *.user
 TestResults/

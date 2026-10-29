@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { date, get, price } from './api';
 import type { EventDetail, EventPage, EventSummary } from './api';
+import { AuthControls } from './features/auth/AuthControls';
 
 const categories = [ ['all', 'Everything'], ['music', 'Music'], ['workshop', 'Workshops'],
   ['arts', 'Arts & culture'], ['food', 'Food & drink'], ['community', 'Community'] ];
@@ -81,6 +82,7 @@ export default function App() {
     <header className="site-header"><a className="wordmark" href="/" aria-label="Gather home">gather<span>✳</span></a>
       <nav aria-label="Main"><a href="#events">Discover events <span aria-hidden="true">↗</span></a></nav>
       <span className="demo-label">PORTFOLIO DEMO</span>
+      <AuthControls />
     </header>
     <main>
       <section className="hero" aria-labelledby="hero-title">

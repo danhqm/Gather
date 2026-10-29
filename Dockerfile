@@ -16,6 +16,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 COPY --from=build /app ./
 COPY --from=web /web/dist ./wwwroot
+RUN mkdir -p /app/keys && chown $APP_UID:$APP_UID /app/keys
 USER $APP_UID
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "EventPlatform.Api.dll"]
