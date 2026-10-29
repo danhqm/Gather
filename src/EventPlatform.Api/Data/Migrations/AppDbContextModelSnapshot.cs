@@ -163,8 +163,15 @@ namespace EventPlatform.Api.Data.Migrations
                     b.Property<DateTimeOffset>("EndsAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("ImageUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
                     b.Property<bool>("IsPublished")
                         .HasColumnType("boolean");
+
+                    b.Property<Guid>("OrganisationId")
+                        .HasColumnType("uuid");
 
                     b.Property<long>("PriceMinor")
                         .HasColumnType("bigint");
@@ -188,6 +195,8 @@ namespace EventPlatform.Api.Data.Migrations
                         .HasColumnType("character varying(200)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("OrganisationId");
 
                     b.HasIndex("IsPublished", "StartsAt", "Id");
 
@@ -346,6 +355,15 @@ namespace EventPlatform.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Organisation");
+                });
+
+            modelBuilder.Entity("EventPlatform.Api.Events.Event", b =>
+                {
+                    b.HasOne("EventPlatform.Api.Auth.Organisation", null)
+                        .WithMany()
+                        .HasForeignKey("OrganisationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

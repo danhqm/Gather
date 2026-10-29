@@ -22,7 +22,7 @@ public static class EventEndpoints
         {
             var item = await db.Events.AsNoTracking().Where(e => e.IsPublished && e.Id == eventId)
                 .Select(e => new { e.Id, e.Title, e.Description, e.Category, e.City, e.Venue,
-                    e.StartsAt, e.EndsAt, e.Timezone, e.Currency, e.PriceMinor, e.Capacity }).SingleOrDefaultAsync(ct);
+                    e.StartsAt, e.EndsAt, e.Timezone, e.Currency, e.PriceMinor, e.Capacity, e.ImageUrl }).SingleOrDefaultAsync(ct);
             return item is null ? Results.NotFound() : Results.Ok(item);
         });
         app.MapGet("/api/date-window", (DateOnly? from, DateOnly? to, string timezone) =>

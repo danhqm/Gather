@@ -1,8 +1,10 @@
 export type EventSummary = {
   id: string; title: string; category: string; city: string; currency: string;
   priceMinor: number; startsAt: string; timezone: string; venue: string;
+  imageUrl: string | null;
 };
 export type EventDetail = EventSummary & { description: string; endsAt: string; capacity: number };
+export type ManagedEvent = EventDetail & { organisationId: string; isPublished: boolean };
 export type EventPage = { items: EventSummary[]; total: number; page: number; pageSize: number };
 export type Session = { id: string; displayName: string; email: string;
   memberships: { organisationId: string; organisationName: string; role: string }[] };

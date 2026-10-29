@@ -3,6 +3,7 @@ namespace EventPlatform.Api.Events;
 public sealed class Event
 {
     public Guid Id { get; set; }
+    public Guid OrganisationId { get; set; }
     public string Title { get; set; } = "";
     public string Description { get; set; } = "";
     public string Category { get; set; } = "";
@@ -15,4 +16,5 @@ public sealed class Event
     public long PriceMinor { get; set; }
     public int Capacity { get; set; }
     public bool IsPublished { get; set; }
+    public string? ImageUrl { get; set; }
 }

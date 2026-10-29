@@ -3,7 +3,7 @@ import type { FormEvent } from 'react';
 import { mutate } from '../../api';
 import type { Session } from '../../api';
 
-export function AuthControls() {
+export function AuthControls({ onSessionChange }: { onSessionChange?: () => void }) {
   const [session, setSession] = useState<Session | null>(null);
   const [mode, setMode] = useState<'login' | 'register'>();
   const [error, setError] = useState('');
@@ -36,19 +36,20 @@ export function AuthControls() {
       const user = await mutate<Session>(`/api/auth/${mode}`, {
         email: fields.get('email'), password: fields.get('password'), displayName: fields.get('displayName'),
       });
-      setSession(user); setMode(undefined);
+      setSession(user); setMode(undefined); onSessionChange?.();
     } catch (e) { setError(e instanceof Error ? e.message : 'Please try again.'); }
     finally { setPending(false); }
   }
 
   async function logout() {
     setPending(true); setError('');
-    try { await mutate('/api/auth/logout', {}); setSession(null); }
+    try { await mutate('/api/auth/logout', {}); setSession(null); onSessionChange?.(); }
     catch (e) { setError(e instanceof Error ? e.message : 'Please try again.'); }
     finally { setPending(false); }
   }
 
   return <div className="auth-controls">
+    {session?.memberships.some(m => m.role === 'Organiser') && <a className="organiser-link" href="/organiser">Manage events</a>}
     {session ? <><span className="account-name" title={session.displayName}>{session.displayName}</span>
       <button className="account-button" disabled={pending} onClick={logout}>Sign out</button></>
       : <button className="account-button" disabled={!ready} onClick={() => setMode('login')}>Sign in</button>}

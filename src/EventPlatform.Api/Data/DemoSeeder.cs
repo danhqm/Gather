@@ -30,6 +30,7 @@ public static class DemoSeeder
         int day, long price, string description, bool published = true) => new()
     {
         Id = Guid.Parse($"00000000-0000-0000-0000-{id:D12}"), Title = title,
+        OrganisationId = DemoAccounts.OrganisationId,
         Category = category, City = city, Venue = venue, Description = description,
         Timezone = "Asia/Kuala_Lumpur", StartsAt = new DateTimeOffset(2026, 11, day, 10, 0, 0, TimeSpan.Zero),
         EndsAt = new DateTimeOffset(2026, 11, day, 13, 0, 0, TimeSpan.Zero),

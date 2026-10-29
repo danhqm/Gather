@@ -6,7 +6,7 @@ namespace EventPlatform.Api.Events;
 public sealed record EventFilter(string? Category, string? City, string? Currency,
     long? MaxPriceMinor, DateTimeOffset? From, DateTimeOffset? To, int Page = 1, int PageSize = 12);
 public sealed record EventSummary(Guid Id, string Title, string Category, string City,
-    string Currency, long PriceMinor, DateTimeOffset StartsAt, string Timezone, string Venue);
+    string Currency, long PriceMinor, DateTimeOffset StartsAt, string Timezone, string Venue, string? ImageUrl);
 public sealed record EventPage(EventSummary[] Items, int Total, int Page, int PageSize);
 
 public sealed class EventQuery(AppDbContext db)
@@ -24,7 +24,7 @@ public sealed class EventQuery(AppDbContext db)
         var items = await query.OrderBy(e => e.StartsAt).ThenBy(e => e.Id)
             .Skip((filter.Page - 1) * filter.PageSize).Take(filter.PageSize)
             .Select(e => new EventSummary(e.Id, e.Title, e.Category, e.City, e.Currency,
-                e.PriceMinor, e.StartsAt, e.Timezone, e.Venue)).ToArrayAsync(ct);
+                e.PriceMinor, e.StartsAt, e.Timezone, e.Venue, e.ImageUrl)).ToArrayAsync(ct);
         return new(items, total, filter.Page, filter.PageSize);
     }
 }

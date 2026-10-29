@@ -24,6 +24,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
         membership.Property(m => m.Role).HasMaxLength(30);
         membership.ToTable(t => t.HasCheckConstraint("CK_Membership_Role", "\"Role\" IN ('Organiser', 'CheckInStaff')"));
         var events = model.Entity<Event>();
+        events.HasOne<Organisation>().WithMany().HasForeignKey(e => e.OrganisationId).OnDelete(DeleteBehavior.Restrict);
+        events.Property(e => e.ImageUrl).HasMaxLength(2048);
         events.Property(e => e.Title).HasMaxLength(160);
         events.Property(e => e.Description).HasMaxLength(4000);
         events.Property(e => e.Category).HasMaxLength(40);

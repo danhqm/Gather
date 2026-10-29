@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { date, get, price } from './api';
 import type { EventDetail, EventPage, EventSummary } from './api';
 import { AuthControls } from './features/auth/AuthControls';
+import { EventDashboard } from './features/organiser/EventDashboard';
 
 const categories = [ ['all', 'Everything'], ['music', 'Music'], ['workshop', 'Workshops'],
   ['arts', 'Arts & culture'], ['food', 'Food & drink'], ['community', 'Community'] ];
@@ -15,6 +16,8 @@ const posterText: Record<string, [string, string]> = {
 function Poster({ event }: { event: EventSummary }) {
   const words = posterText[event.category] ?? ['SEE YOU', 'THERE.'];
   return <div className={`poster poster-${event.category}`} aria-hidden="true">
+    {event.imageUrl && <img className="poster-image" src={event.imageUrl} alt="" loading="lazy" referrerPolicy="no-referrer"
+      onError={e => { e.currentTarget.style.display = 'none'; }} onLoad={e => { e.currentTarget.style.display = 'block'; }} />}
     <div className="poster-top"><span>GATHER / LOCAL EDITION</span><span>NO. {event.id.slice(-2)}</span></div>
     <div className="poster-words"><span>{words[0]}</span><span>{words[1]}</span></div>
     <div className="poster-shape" />
@@ -22,7 +25,7 @@ function Poster({ event }: { event: EventSummary }) {
   </div>;
 }
 
-export default function App() {
+function CataloguePage() {
   const [category, setCategory] = useState('all');
   const [draft, setDraft] = useState(initialFilters);
   const [filters, setFilters] = useState(initialFilters);
@@ -140,4 +143,8 @@ export default function App() {
         : <div className="detail-content"><h2 id="detail-title">{detailError ? 'Unable to load event' : 'Loading event…'}</h2>{detailError && <p role="alert">{detailError}</p>}</div>}
     </dialog>
   </>;
+}
+
+export default function App() {
+  return window.location.pathname === '/organiser' ? <EventDashboard /> : <CataloguePage />;
 }

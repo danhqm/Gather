@@ -9,6 +9,7 @@ builder.Services.AddDbContext<AppDbContext>((services, options) => options.UseNp
     services.GetRequiredService<IConfiguration>().GetConnectionString("Database")
     ?? throw new InvalidOperationException("Set ConnectionStrings__Database before starting the API.")));
 builder.Services.AddScoped<EventQuery>();
+builder.Services.AddScoped<EventManagement>();
 builder.AddAccounts();
 var app = builder.Build();
 app.UseExceptionHandler();
@@ -32,6 +33,7 @@ app.MapGet("/api/health", async (AppDbContext db, CancellationToken ct) =>
     await db.Database.CanConnectAsync(ct) ? Results.Ok(new { status = "healthy" }) : Results.StatusCode(503));
 app.MapEventEndpoints();
 app.MapAuthEndpoints();
+app.MapOrganiserEndpoints();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapFallbackToFile("index.html");

@@ -2,9 +2,9 @@
 
 A portfolio event platform. The first milestone is a working, database-backed event catalogue: browse fictional events, filter by category/city/price/local dates, and open an event's details.
 
-**Implemented:** ASP.NET Core 10 API, EF Core migrations, PostgreSQL 18, React/TypeScript/Vite frontend, Docker Compose, customer signup/sign-in, organisation permissions, PostgreSQL integration tests and browser smoke tests.
+**Implemented:** ASP.NET Core 10 API, EF Core migrations, PostgreSQL 18, React/TypeScript/Vite frontend, Docker Compose, customer signup/sign-in, organisation permissions, organiser event management, PostgreSQL integration tests and browser smoke tests.
 
-**Planned:** organiser event tools, capacity-safe reservations, sandbox payments, QR admission, OpenAI-assisted search and AWS deployment. These are not available yet. This demo does not accept real bookings.
+**Planned:** capacity-safe reservations, sandbox payments, QR admission, OpenAI-assisted search and AWS deployment. These are not available yet. This demo does not accept real bookings.
 
 ## Run locally
 
@@ -83,5 +83,13 @@ For local organiser/staff accounts, set `DEMO_ACCOUNT_PASSWORD` in `.env` before
 Identity hashes passwords and issues an HttpOnly session cookie. Production cookies require HTTPS. Local Compose uses HTTP on localhost. Every authenticated mutation, signup and login requires the `X-CSRF-TOKEN` header; fetch its current value from `/api/auth/csrf` after an identity change. Keys used to protect cookies persist in the `data_protection_keys` Docker volume. Treat that volume as sensitive; it is not a replacement for production key protection and backup policy.
 
 Email verification and password recovery are not implemented in this portfolio milestone. Use test addresses. Accounts and events persist in the local PostgreSQL volume.
+
+## Organiser dashboard
+
+Sign in as the local organiser, then choose **Manage events**. Create a draft, edit its details, publish it into discovery and unpublish it again. Public users cannot read drafts. Every management endpoint checks the event's organisation membership on the server; a customer or another organisation's organiser cannot change it.
+
+This demo deliberately supports Kuala Lumpur and George Town, Malaysia time, MYR prices and one general-admission capacity per event. The editor accepts an optional HTTPS image URL; hosted image uploads come later. An empty or failed image uses the illustrated poster. Events must start in the future before publication. The dashboard shows the newest 200 events; pagination is needed before using it for a larger catalogue.
+
+Browser organiser tests read `DEMO_ACCOUNT_PASSWORD` from the ignored local `.env` (or the process environment), and skip that journey if it is absent. Tests run serially because publishing changes the shared local catalogue; they unpublish their demo events when finished.
 
 References: [ASP.NET Core Identity](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-10.0), [antiforgery tokens](https://learn.microsoft.com/en-us/aspnet/core/security/anti-request-forgery?view=aspnetcore-10.0).
