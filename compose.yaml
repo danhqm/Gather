@@ -25,6 +25,10 @@ services:
       Demo__Seed: "true"
       Demo__AccountPassword: ${DEMO_ACCOUNT_PASSWORD:-}
       DataProtection__KeyPath: /app/keys
+      Payments__ApiKey: ${STRIPE_API_KEY:-}
+      Payments__WebhookSecret: ${STRIPE_WEBHOOK_SECRET:-}
+      Payments__PublicOrigin: http://localhost:8080
+      Payments__PaymentMethodConfiguration: ${STRIPE_PAYMENT_METHOD_CONFIGURATION:-}
     volumes:
       - data_protection_keys:/app/keys
     ports:

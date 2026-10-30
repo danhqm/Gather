@@ -1,6 +1,8 @@
 using EventPlatform.Api.Events;
 using EventPlatform.Api.Auth;
 using EventPlatform.Api.Bookings;
+using EventPlatform.Api.Payments;
+using EventPlatform.Api.Tickets;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -11,12 +13,40 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
 {
     public DbSet<Event> Events => Set<Event>();
     public DbSet<Booking> Bookings => Set<Booking>();
+    public DbSet<PaymentAttempt> PaymentAttempts => Set<PaymentAttempt>();
+    public DbSet<ProcessedWebhook> ProcessedWebhooks => Set<ProcessedWebhook>();
+    public DbSet<RefundJob> RefundJobs => Set<RefundJob>();
+    public DbSet<Ticket> Tickets => Set<Ticket>();
     public DbSet<Organisation> Organisations => Set<Organisation>();
     public DbSet<OrganisationMembership> OrganisationMemberships => Set<OrganisationMembership>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
         base.OnModelCreating(model);
+        var attempt = model.Entity<PaymentAttempt>();
+        attempt.HasKey(p => p.BookingId);
+        attempt.HasOne<Booking>().WithOne().HasForeignKey<PaymentAttempt>(p => p.BookingId).OnDelete(DeleteBehavior.Restrict);
+        attempt.HasIndex(p => p.SessionId).IsUnique();
+        attempt.HasIndex(p => p.PaymentId).IsUnique();
+        attempt.Property(p => p.SessionId).HasMaxLength(255);
+        attempt.Property(p => p.PaymentId).HasMaxLength(255);
+        attempt.Property(p => p.IdempotencyKey).HasMaxLength(255);
+        attempt.Property(p => p.CheckoutUrl).HasMaxLength(4096);
+        var webhook = model.Entity<ProcessedWebhook>();
+        webhook.Property(p => p.Id).HasMaxLength(255);
+        webhook.HasOne<Booking>().WithMany().HasForeignKey(p => p.BookingId).OnDelete(DeleteBehavior.Restrict);
+        var refund = model.Entity<RefundJob>();
+        refund.HasOne<Booking>().WithMany().HasForeignKey(p => p.BookingId).OnDelete(DeleteBehavior.Restrict);
+        refund.HasIndex(p => p.PaymentId).IsUnique();
+        refund.HasIndex(p => new { p.State, p.NextAttemptAt });
+        refund.Property(p => p.PaymentId).HasMaxLength(255);
+        refund.Property(p => p.IdempotencyKey).HasMaxLength(255);
+        refund.Property(p => p.ProviderRefundId).HasMaxLength(255);
+        refund.Property(p => p.State).HasMaxLength(24);
+        var ticket = model.Entity<Ticket>();
+        ticket.HasOne<Booking>().WithMany().HasForeignKey(t => t.BookingId).OnDelete(DeleteBehavior.Restrict);
+        ticket.HasIndex(t => new { t.BookingId, t.Number }).IsUnique();
+        ticket.ToTable(t => t.HasCheckConstraint("CK_Ticket_Number", "\"Number\" BETWEEN 1 AND 4"));
         var booking = model.Entity<Booking>();
         booking.HasOne<Event>().WithMany().HasForeignKey(b => b.EventId).OnDelete(DeleteBehavior.Restrict);
         booking.HasOne<ApplicationUser>().WithMany().HasForeignKey(b => b.CustomerId).OnDelete(DeleteBehavior.Restrict);

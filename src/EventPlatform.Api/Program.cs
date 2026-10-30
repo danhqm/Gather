@@ -2,6 +2,7 @@ using EventPlatform.Api.Data;
 using EventPlatform.Api.Auth;
 using EventPlatform.Api.Events;
 using EventPlatform.Api.Bookings;
+using EventPlatform.Api.Payments;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +13,18 @@ builder.Services.AddDbContext<AppDbContext>((services, options) => options.UseNp
 builder.Services.AddScoped<EventQuery>();
 builder.Services.AddScoped<EventManagement>();
 builder.Services.AddScoped<ReservationService>();
+builder.Services.AddOptions<PaymentOptions>().BindConfiguration("Payments")
+    .Validate(options => string.IsNullOrEmpty(options.ApiKey) || options.ApiKey.StartsWith("rk_test_") || options.ApiKey.StartsWith("sk_test_"),
+        "Only Stripe sandbox/test keys are permitted.")
+    .Validate(options => Uri.TryCreate(options.PublicOrigin, UriKind.Absolute, out var uri)
+        && (uri.Scheme == "https" || uri.Scheme == "http" && uri.IsLoopback)
+        && uri.AbsolutePath == "/" && string.IsNullOrEmpty(uri.Query) && string.IsNullOrEmpty(uri.Fragment) && string.IsNullOrEmpty(uri.UserInfo),
+        "PublicOrigin must be an HTTPS origin or localhost HTTP origin.").ValidateOnStart();
+builder.Services.AddSingleton<IPaymentGateway, SandboxPaymentGateway>();
+builder.Services.AddScoped<CheckoutService>();
+builder.Services.AddScoped<PaymentConfirmation>();
+builder.Services.AddScoped<RefundProcessor>();
+builder.Services.AddHostedService<RefundWorker>();
 builder.Services.AddOptions<ReservationOptions>().BindConfiguration("Reservations")
     .Validate(options => options.HoldMinutes is >= 1 and <= 60, "HoldMinutes must be between 1 and 60.").ValidateOnStart();
 builder.Services.AddHostedService<ReservationExpiryWorker>();
@@ -40,6 +53,7 @@ app.MapEventEndpoints();
 app.MapAuthEndpoints();
 app.MapOrganiserEndpoints();
 app.MapBookingEndpoints();
+app.MapPaymentEndpoints();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapFallbackToFile("index.html");

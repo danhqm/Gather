@@ -10,8 +10,9 @@ using System.Text.Json;
 
 namespace EventPlatform.Tests;
 
-public sealed class WebAppFixture : IAsyncLifetime
+public class WebAppFixture : IAsyncLifetime
 {
+    public Action<IServiceCollection>? ConfigureServices { get; init; }
     private readonly PostgreSqlContainer database = new PostgreSqlBuilder("postgres:18-alpine").Build();
     private WebApplicationFactory<Program> factory = null!;
     public HttpClient Client { get; private set; } = null!;
@@ -27,8 +28,10 @@ public sealed class WebAppFixture : IAsyncLifetime
                 ["ConnectionStrings:Database"] = database.GetConnectionString(),
                 ["Database:Initialize"] = "true", ["Demo:Seed"] = "true",
                 ["Demo:AccountPassword"] = "Local-Test-Password123!"
-                , ["Reservations:RunExpiryWorker"] = "false"
-            })));
+                , ["Reservations:RunExpiryWorker"] = "false",
+                ["Payments:RunRefundWorker"] = "false",
+                ["Payments:WebhookSecret"] = "whsec_integration_tests_only"
+            })).ConfigureServices(services => ConfigureServices?.Invoke(services)));
         Client = CreateClient();
     }
 

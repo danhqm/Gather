@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ApiError, mutate } from '../../api';
 import type { Booking, EventDetail } from '../../api';
+import { CheckoutButton } from './CheckoutButton';
 
 type SavedRequest = { requestId: string; bookingId?: string };
 function savedRequest(eventId: string): SavedRequest {
@@ -82,9 +83,10 @@ export function ReservationPanel({ event, onSignIn }: { event: EventDetail; onSi
       <p role="status">{booking.quantity} {booking.quantity === 1 ? 'ticket' : 'tickets'} · {booking.state}</p>
       {booking.state === 'Held' ? <>
         <p>Time remaining <strong role="timer" aria-live="off">{String(Math.floor(remaining / 60)).padStart(2, '0')}:{String(remaining % 60).padStart(2, '0')}</strong></p>
-        <p className="field-help">Temporary demo reservation. Checkout is not enabled yet.</p>
+        <CheckoutButton booking={booking} />
         <button className="account-button" disabled={pending} onClick={cancel}>{pending ? 'Cancelling…' : 'Cancel reservation'}</button>
-      </> : <button className="primary" disabled={pending} onClick={() => { setBooking(undefined); setSaved({ requestId: crypto.randomUUID() }); setError(''); }}>Start a new reservation</button>}
+      </> : ['Confirmed', 'PaymentReview'].includes(booking.state) ? <a href={`/bookings/${booking.bookingId}`}>View booking ↗</a>
+        : <button className="primary" disabled={pending} onClick={() => { setBooking(undefined); setSaved({ requestId: crypto.randomUUID() }); setError(''); }}>Start a new reservation</button>}
     </> : saved.bookingId ? <p>Check your existing reservation before making another.</p> : <>
       <div className="reserve-actions"><label htmlFor="ticket-quantity">Tickets</label><select id="ticket-quantity" value={quantity} disabled={pending} onChange={e => setQuantity(Number(e.target.value))}>
         {Array.from({ length: Math.min(4, event.capacity) }, (_, i) => i + 1).map(value => <option key={value} value={value}>{value}</option>)}</select>
@@ -92,5 +94,6 @@ export function ReservationPanel({ event, onSignIn }: { event: EventDetail; onSi
       <p className="field-help">A temporary hold for up to four tickets. Sign in to reserve.</p>
     </>}
     {saved.bookingId && <button className="text-button" disabled={loading || pending} onClick={() => setReload(value => value + 1)}>Refresh reservation status</button>}
+    {saved.bookingId && booking?.state === 'Held' && <a className="text-button" href={`/bookings/${saved.bookingId}`}>Open booking page ↗</a>}
   </section>;
 }

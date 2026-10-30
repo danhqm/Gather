@@ -5,6 +5,7 @@ import type { EventDetail, EventPage, EventSummary } from './api';
 import { AuthControls } from './features/auth/AuthControls';
 import { EventDashboard } from './features/organiser/EventDashboard';
 import { ReservationPanel } from './features/booking/ReservationPanel';
+import { BookingStatusPage } from './features/booking/BookingStatusPage';
 
 const categories = [ ['all', 'Everything'], ['music', 'Music'], ['workshop', 'Workshops'],
   ['arts', 'Arts & culture'], ['food', 'Food & drink'], ['community', 'Community'] ];
@@ -153,5 +154,7 @@ function CataloguePage() {
 }
 
 export default function App() {
+  const booking = window.location.pathname.match(/^\/bookings\/([0-9a-f-]{36})$/i);
+  if (booking) return <BookingStatusPage bookingId={booking[1]} />;
   return window.location.pathname === '/organiser' ? <EventDashboard /> : <CataloguePage />;
 }

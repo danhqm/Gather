@@ -2,9 +2,9 @@
 
 A portfolio event platform. The first milestone is a working, database-backed event catalogue: browse fictional events, filter by category/city/price/local dates, and open an event's details.
 
-**Implemented:** ASP.NET Core 10 API, EF Core migrations, PostgreSQL 18, React/TypeScript/Vite frontend, Docker Compose, customer signup/sign-in, organisation permissions, organiser event management, capacity-safe reservations, PostgreSQL integration tests and browser smoke tests.
+**Implemented:** ASP.NET Core 10 API, EF Core migrations, PostgreSQL 18, React/TypeScript/Vite frontend, Docker Compose, customer signup/sign-in, organisation permissions, organiser event management, capacity-safe reservations, free booking confirmation, a sandbox payment adapter, PostgreSQL integration tests and browser smoke tests.
 
-**Planned:** sandbox payments, QR admission, OpenAI-assisted search and AWS deployment. These are not available yet. This demo does not accept real bookings.
+**Planned:** real Stripe sandbox verification, QR admission, OpenAI-assisted search and AWS deployment. These are not available yet. This demo does not accept real bookings.
 
 ## Run locally
 
@@ -96,7 +96,12 @@ References: [ASP.NET Core Identity](https://learn.microsoft.com/en-us/aspnet/cor
 
 ## Reservations
 
-Signed-in customers can hold 1–4 admissions for 35 minutes, restore the hold after refreshing, and cancel it. The countdown uses server time even when the browser clock is wrong. Holds are demo reservations; checkout is not enabled yet.
+Signed-in customers can hold 1–4 admissions for 35 minutes, restore the hold after refreshing, and cancel it. The countdown uses server time even when the browser clock is wrong. Holds are demo reservations. Free bookings can be confirmed; paid checkout becomes available only after sandbox configuration.
 
 PostgreSQL event-row locks serialize capacity changes. Expired holds stop counting immediately, independently of the cleanup worker. Request IDs make retries return the original booking. Price, capacity and start time become immutable after the first booking; unpublishing blocks new holds and preserves existing ones.
+
+
+## Sandbox checkout status
+
+The payment pipeline and booking status page are implemented and covered by 41 API tests and 18 browser checks. Free events can be confirmed locally. The real Stripe sandbox journey has **not** been verified: local credentials and a webhook listener are still needed. See [sandbox setup](docs/stripe-sandbox.md). No live payments are supported.
 
