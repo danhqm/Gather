@@ -27,6 +27,7 @@ public sealed class WebAppFixture : IAsyncLifetime
                 ["ConnectionStrings:Database"] = database.GetConnectionString(),
                 ["Database:Initialize"] = "true", ["Demo:Seed"] = "true",
                 ["Demo:AccountPassword"] = "Local-Test-Password123!"
+                , ["Reservations:RunExpiryWorker"] = "false"
             })));
         Client = CreateClient();
     }
@@ -50,6 +51,15 @@ public sealed class WebAppFixture : IAsyncLifetime
         var client = CreateClient();
         using var login = await SendAsync(client, "/api/auth/login", new { email = "organiser@gather.test", password = "Local-Test-Password123!" });
         login.EnsureSuccessStatusCode();
+        return client;
+    }
+
+    public async Task<HttpClient> CustomerClientAsync()
+    {
+        var client = CreateClient();
+        using var registered = await SendAsync(client, "/api/auth/register", new {
+            email = $"customer-{Guid.NewGuid():N}@example.test", displayName = "Test attendee", password = "Local-Test-Password123!" });
+        registered.EnsureSuccessStatusCode();
         return client;
     }
 

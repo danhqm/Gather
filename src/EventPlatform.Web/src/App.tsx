@@ -4,6 +4,7 @@ import { date, get, price } from './api';
 import type { EventDetail, EventPage, EventSummary } from './api';
 import { AuthControls } from './features/auth/AuthControls';
 import { EventDashboard } from './features/organiser/EventDashboard';
+import { ReservationPanel } from './features/booking/ReservationPanel';
 
 const categories = [ ['all', 'Everything'], ['music', 'Music'], ['workshop', 'Workshops'],
   ['arts', 'Arts & culture'], ['food', 'Food & drink'], ['community', 'Community'] ];
@@ -37,6 +38,8 @@ function CataloguePage() {
   const [selected, setSelected] = useState<string>();
   const [detail, setDetail] = useState<EventDetail>();
   const [detailError, setDetailError] = useState('');
+  const [signInRequest, setSignInRequest] = useState(0);
+  const returnToEvent = useRef<string | undefined>(undefined);
   const dialog = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -85,7 +88,9 @@ function CataloguePage() {
     <header className="site-header"><a className="wordmark" href="/" aria-label="Gather home">gather<span>✳</span></a>
       <nav aria-label="Main"><a href="#events">Discover events <span aria-hidden="true">↗</span></a></nav>
       <span className="demo-label">PORTFOLIO DEMO</span>
-      <AuthControls />
+      <AuthControls signInRequest={signInRequest} onSessionChange={() => {
+        if (returnToEvent.current) { setSelected(returnToEvent.current); returnToEvent.current = undefined; }
+      }} />
     </header>
     <main>
       <section className="hero" aria-labelledby="hero-title">
@@ -132,14 +137,16 @@ function CataloguePage() {
       </section>
       <aside className="closing-note"><span aria-hidden="true">↗</span><p>The best part of a plan?<br /><em>The people you meet there.</em></p><span>SEE YOU OUT THERE.</span></aside>
     </main>
-    <footer><a className="wordmark" href="/">gather<span>✳</span></a><p>Fictional events for a portfolio demo. Bookings are not open.</p><span>MADE FOR SHOWING UP.</span></footer>
+    <footer><a className="wordmark" href="/">gather<span>✳</span></a><p>Fictional events. Demo reservations only.</p><span>MADE FOR SHOWING UP.</span></footer>
     <dialog ref={dialog} onClose={() => setSelected(undefined)} aria-labelledby="detail-title">
       <button className="close-dialog" onClick={() => setSelected(undefined)} aria-label="Close event details">×</button>
       {detail ? <><Poster event={detail} /><div className="detail-content"><span className="eyebrow">{detail.category} / {detail.city}</span>
         <h2 id="detail-title">{detail.title}</h2><p>{detail.description}</p>
         <dl><div><dt>When</dt><dd>{date(detail, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}<small>{detail.timezone}</small></dd></div>
           <div><dt>Where</dt><dd>{detail.venue}, {detail.city}</dd></div><div><dt>Entry</dt><dd>{price(detail)}</dd></div></dl>
-        <p className="demo-note">Demo event · Booking opens in a later milestone.</p></div></>
+        <ReservationPanel key={detail.id} event={detail} onSignIn={() => {
+          returnToEvent.current = detail.id; setSelected(undefined); setSignInRequest(value => value + 1);
+        }} /></div></>
         : <div className="detail-content"><h2 id="detail-title">{detailError ? 'Unable to load event' : 'Loading event…'}</h2>{detailError && <p role="alert">{detailError}</p>}</div>}
     </dialog>
   </>;

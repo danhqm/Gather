@@ -131,6 +131,63 @@ namespace EventPlatform.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("EventPlatform.Api.Bookings.Booking", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)");
+
+                    b.Property<long>("TotalMinor")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UnitPriceMinor")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId", "RequestId")
+                        .IsUnique();
+
+                    b.HasIndex("EventId", "State", "ExpiresAt");
+
+                    b.ToTable("Bookings", t =>
+                        {
+                            t.HasCheckConstraint("CK_Booking_Expiry", "\"ExpiresAt\" > \"CreatedAt\"");
+
+                            t.HasCheckConstraint("CK_Booking_Quantity", "\"Quantity\" BETWEEN 1 AND 4");
+
+                            t.HasCheckConstraint("CK_Booking_Total", "\"UnitPriceMinor\" >= 0 AND \"TotalMinor\" = \"UnitPriceMinor\" * \"Quantity\"");
+                        });
+                });
+
             modelBuilder.Entity("EventPlatform.Api.Events.Event", b =>
                 {
                     b.Property<Guid>("Id")
@@ -355,6 +412,21 @@ namespace EventPlatform.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Organisation");
+                });
+
+            modelBuilder.Entity("EventPlatform.Api.Bookings.Booking", b =>
+                {
+                    b.HasOne("EventPlatform.Api.Auth.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("EventPlatform.Api.Events.Event", null)
+                        .WithMany()
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("EventPlatform.Api.Events.Event", b =>

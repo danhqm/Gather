@@ -35,26 +35,33 @@ public sealed class EventManagement(AppDbContext db, CurrentOrganisation permiss
 
     public async Task<EventUpdateResult> UpdateAsync(Guid userId, Guid eventId, UpdateEvent? command, CancellationToken ct)
     {
-        var item = await db.Events.SingleOrDefaultAsync(e => e.Id == eventId, ct);
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        var item = await Inventory.LockEventAsync(db, eventId, ct);
         if (item is null) return new(404);
         if (!await permissions.RequireRoleAsync(userId, item.OrganisationId, OrganisationRoles.Organiser, ct)) return new(403);
         var error = Validate(command);
         if (error is not null) return new(400, Error: error);
-        if (item.IsPublished && command!.StartsAt <= DateTimeOffset.UtcNow)
+        if (await db.Bookings.AnyAsync(b => b.EventId == eventId, ct) &&
+            (item.PriceMinor != command!.PriceMinor || item.Currency != command.Currency || item.Capacity != command.Capacity || item.StartsAt != command.StartsAt))
+            return new(409, Error: "Price, capacity and start time cannot change after a booking exists.");
+        if (item.IsPublished && command!.StartsAt <= await Inventory.UtcNowAsync(db, ct))
             return new(400, Error: "Published events must start in the future.");
         Apply(item, command!);
         await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
         return new(200, item);
     }
 
     public async Task<EventUpdateResult> SetPublicationAsync(Guid userId, Guid eventId, bool publish, CancellationToken ct)
     {
-        var item = await db.Events.SingleOrDefaultAsync(e => e.Id == eventId, ct);
+        await using var transaction = await db.Database.BeginTransactionAsync(ct);
+        var item = await Inventory.LockEventAsync(db, eventId, ct);
         if (item is null) return new(404);
         if (!await permissions.RequireRoleAsync(userId, item.OrganisationId, OrganisationRoles.Organiser, ct)) return new(403);
-        if (publish && item.StartsAt <= DateTimeOffset.UtcNow) return new(400, Error: "Only future events can be published.");
+        if (publish && item.StartsAt <= await Inventory.UtcNowAsync(db, ct)) return new(400, Error: "Only future events can be published.");
         item.IsPublished = publish;
         await db.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
         return new(200, item);
     }
 

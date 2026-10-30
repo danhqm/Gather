@@ -20,7 +20,8 @@ export function EventEditor({ event, organisationId, onSaved, onCancel }: {
       const [whole, fraction = ''] = value('price').split('.');
       const details = {
         title: value('title'), description: value('description'), category: value('category'), city: value('city'), venue: value('venue'),
-        startsAt: new Date(`${value('startsAt')}:00+08:00`).toISOString(), endsAt: new Date(`${value('endsAt')}:00+08:00`).toISOString(),
+        startsAt: event && value('startsAt') === localInput(event.startsAt) ? event.startsAt : new Date(`${value('startsAt')}:00+08:00`).toISOString(),
+        endsAt: event && value('endsAt') === localInput(event.endsAt) ? event.endsAt : new Date(`${value('endsAt')}:00+08:00`).toISOString(),
         timezone: 'Asia/Kuala_Lumpur', currency: 'MYR', priceMinor: Number(whole) * 100 + Number(fraction.padEnd(2, '0')),
         capacity: Number(value('capacity')), imageUrl: value('imageUrl') || null,
       };

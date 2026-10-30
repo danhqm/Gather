@@ -1,6 +1,7 @@
 using EventPlatform.Api.Data;
 using EventPlatform.Api.Auth;
 using EventPlatform.Api.Events;
+using EventPlatform.Api.Bookings;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,10 @@ builder.Services.AddDbContext<AppDbContext>((services, options) => options.UseNp
     ?? throw new InvalidOperationException("Set ConnectionStrings__Database before starting the API.")));
 builder.Services.AddScoped<EventQuery>();
 builder.Services.AddScoped<EventManagement>();
+builder.Services.AddScoped<ReservationService>();
+builder.Services.AddOptions<ReservationOptions>().BindConfiguration("Reservations")
+    .Validate(options => options.HoldMinutes is >= 1 and <= 60, "HoldMinutes must be between 1 and 60.").ValidateOnStart();
+builder.Services.AddHostedService<ReservationExpiryWorker>();
 builder.AddAccounts();
 var app = builder.Build();
 app.UseExceptionHandler();
@@ -34,6 +39,7 @@ app.MapGet("/api/health", async (AppDbContext db, CancellationToken ct) =>
 app.MapEventEndpoints();
 app.MapAuthEndpoints();
 app.MapOrganiserEndpoints();
+app.MapBookingEndpoints();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapFallbackToFile("index.html");

@@ -1,5 +1,6 @@
 using EventPlatform.Api.Events;
 using EventPlatform.Api.Auth;
+using EventPlatform.Api.Bookings;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -9,12 +10,26 @@ namespace EventPlatform.Api.Data;
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)
 {
     public DbSet<Event> Events => Set<Event>();
+    public DbSet<Booking> Bookings => Set<Booking>();
     public DbSet<Organisation> Organisations => Set<Organisation>();
     public DbSet<OrganisationMembership> OrganisationMemberships => Set<OrganisationMembership>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
         base.OnModelCreating(model);
+        var booking = model.Entity<Booking>();
+        booking.HasOne<Event>().WithMany().HasForeignKey(b => b.EventId).OnDelete(DeleteBehavior.Restrict);
+        booking.HasOne<ApplicationUser>().WithMany().HasForeignKey(b => b.CustomerId).OnDelete(DeleteBehavior.Restrict);
+        booking.HasIndex(b => new { b.CustomerId, b.RequestId }).IsUnique();
+        booking.HasIndex(b => new { b.EventId, b.State, b.ExpiresAt });
+        booking.Property(b => b.Currency).HasMaxLength(3);
+        booking.Property(b => b.State).HasConversion<string>().HasMaxLength(24);
+        booking.ToTable(t =>
+        {
+            t.HasCheckConstraint("CK_Booking_Quantity", "\"Quantity\" BETWEEN 1 AND 4");
+            t.HasCheckConstraint("CK_Booking_Total", "\"UnitPriceMinor\" >= 0 AND \"TotalMinor\" = \"UnitPriceMinor\" * \"Quantity\"");
+            t.HasCheckConstraint("CK_Booking_Expiry", "\"ExpiresAt\" > \"CreatedAt\"");
+        });
         model.Entity<ApplicationUser>().Property(u => u.DisplayName).HasMaxLength(80);
         model.Entity<Organisation>().Property(o => o.Name).HasMaxLength(120);
         var membership = model.Entity<OrganisationMembership>();

@@ -2,9 +2,9 @@
 
 A portfolio event platform. The first milestone is a working, database-backed event catalogue: browse fictional events, filter by category/city/price/local dates, and open an event's details.
 
-**Implemented:** ASP.NET Core 10 API, EF Core migrations, PostgreSQL 18, React/TypeScript/Vite frontend, Docker Compose, customer signup/sign-in, organisation permissions, organiser event management, PostgreSQL integration tests and browser smoke tests.
+**Implemented:** ASP.NET Core 10 API, EF Core migrations, PostgreSQL 18, React/TypeScript/Vite frontend, Docker Compose, customer signup/sign-in, organisation permissions, organiser event management, capacity-safe reservations, PostgreSQL integration tests and browser smoke tests.
 
-**Planned:** capacity-safe reservations, sandbox payments, QR admission, OpenAI-assisted search and AWS deployment. These are not available yet. This demo does not accept real bookings.
+**Planned:** sandbox payments, QR admission, OpenAI-assisted search and AWS deployment. These are not available yet. This demo does not accept real bookings.
 
 ## Run locally
 
@@ -93,3 +93,10 @@ This demo deliberately supports Kuala Lumpur and George Town, Malaysia time, MYR
 Browser organiser tests read `DEMO_ACCOUNT_PASSWORD` from the ignored local `.env` (or the process environment), and skip that journey if it is absent. Tests run serially because publishing changes the shared local catalogue; they unpublish their demo events when finished.
 
 References: [ASP.NET Core Identity](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity?view=aspnetcore-10.0), [antiforgery tokens](https://learn.microsoft.com/en-us/aspnet/core/security/anti-request-forgery?view=aspnetcore-10.0).
+
+## Reservations
+
+Signed-in customers can hold 1–4 admissions for 35 minutes, restore the hold after refreshing, and cancel it. The countdown uses server time even when the browser clock is wrong. Holds are demo reservations; checkout is not enabled yet.
+
+PostgreSQL event-row locks serialize capacity changes. Expired holds stop counting immediately, independently of the cleanup worker. Request IDs make retries return the original booking. Price, capacity and start time become immutable after the first booking; unpublishing blocks new holds and preserves existing ones.
+

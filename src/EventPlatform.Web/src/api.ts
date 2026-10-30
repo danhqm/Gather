@@ -5,6 +5,11 @@ export type EventSummary = {
 };
 export type EventDetail = EventSummary & { description: string; endsAt: string; capacity: number };
 export type ManagedEvent = EventDetail & { organisationId: string; isPublished: boolean };
+export type Booking = { bookingId: string; eventId: string; state: string; quantity: number;
+  totalMinor: number; currency: string; serverNow: string; expiresAt: string };
+export class ApiError extends Error {
+  constructor(public status: number, message: string) { super(message); }
+}
 export type EventPage = { items: EventSummary[]; total: number; page: number; pageSize: number };
 export type Session = { id: string; displayName: string; email: string;
   memberships: { organisationId: string; organisationName: string; role: string }[] };
@@ -16,7 +21,7 @@ export async function mutate<T>(path: string, body: unknown, method = 'POST'): P
     body: JSON.stringify(body) });
   if (!response.ok) {
     const problem = await response.json().catch(() => null);
-    throw new Error(response.status === 401 ? 'Email or password is incorrect.'
+    throw new ApiError(response.status, response.status === 401 ? path === '/api/auth/login' ? 'Email or password is incorrect.' : 'Sign in to continue.'
       : response.status === 429 ? 'Too many attempts. Please wait a minute and try again.'
       : problem?.detail || 'The request could not be completed. Please try again.');
   }

@@ -3,7 +3,7 @@ import type { FormEvent } from 'react';
 import { mutate } from '../../api';
 import type { Session } from '../../api';
 
-export function AuthControls({ onSessionChange }: { onSessionChange?: () => void }) {
+export function AuthControls({ onSessionChange, signInRequest = 0 }: { onSessionChange?: () => void; signInRequest?: number }) {
   const [session, setSession] = useState<Session | null>(null);
   const [mode, setMode] = useState<'login' | 'register'>();
   const [error, setError] = useState('');
@@ -11,6 +11,7 @@ export function AuthControls({ onSessionChange }: { onSessionChange?: () => void
   const [ready, setReady] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
   const form = useRef<HTMLFormElement>(null);
+  useEffect(() => { if (signInRequest > 0) setMode('login'); }, [signInRequest]);
 
   useEffect(() => {
     const controller = new AbortController();
