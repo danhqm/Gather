@@ -1,0 +1,79 @@
+name: gather-aws
+x-runtime: &runtime
+  restart: unless-stopped
+  logging:
+    driver: local
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  postgres:
+    <<: *runtime
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: gather
+      POSTGRES_USER: gather
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set a fresh database password in .env.aws}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gather -d gather"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  app:
+    <<: *runtime
+    image: ${GATHER_IMAGE:-gather:aws-demo}
+    build: .
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: 8080
+      AllowedHosts: ${GATHER_PUBLIC_HOST:?Set the Elastic IP in .env.aws}
+      ConnectionStrings__Database: Host=postgres;Database=gather;Username=gather;Password=${POSTGRES_PASSWORD:?Set a fresh database password in .env.aws}
+      DataProtection__KeyPath: /app/keys
+      ReverseProxy__Address: 172.30.246.2
+      Database__Initialize: ${GATHER_INITIALIZE:-false}
+      Demo__Seed: "true"
+      Demo__AccountPassword: ${DEMO_ACCOUNT_PASSWORD:?Set a fresh private demo password in .env.aws}
+      Payments__PublicOrigin: https://${GATHER_PUBLIC_HOST:?Set the Elastic IP in .env.aws}
+      Payments__ApiKey: ${STRIPE_API_KEY:-}
+      Payments__WebhookSecret: ${STRIPE_WEBHOOK_SECRET:-}
+      Payments__PaymentMethodConfiguration: ${STRIPE_PAYMENT_METHOD_CONFIGURATION:-}
+      OpenAI__Enabled: ${OPENAI_SEARCH_ENABLED:-false}
+      OpenAI__ApiKey: ${OPENAI_API_KEY:-}
+    volumes:
+      - data_protection_keys:/app/keys
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  proxy:
+    <<: *runtime
+    image: caddy:2.11.9-alpine
+    environment:
+      GATHER_PUBLIC_HOST: ${GATHER_PUBLIC_HOST:?Set the Elastic IP in .env.aws}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - certificates:/data
+    networks:
+      default:
+        ipv4_address: 172.30.246.2
+    depends_on:
+      - app
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.30.246.0/24
+          ip_range: 172.30.246.128/25
+
+volumes:
+  postgres_data:
+  data_protection_keys:
+  certificates:
