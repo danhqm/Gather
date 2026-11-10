@@ -64,10 +64,6 @@ flowchart LR
 
 The browser talks to one origin. Identity, permissions, reservations, payment verification, and ticket admission are handled by the backend. The optional OpenAI and Stripe connections are enabled in the local demo and remain unconfigured in the AWS deployment.
 
-## Launch film
-
-A 24-second, 1080p launch film has been produced with Brag and Hyperframes. It follows discovery → ticket → admission using staged demo data, Gather's visual identity, and an original instrumental. The video and thumbnail are prepared locally; they are not yet published in this repository.
-
 ## Run locally
 
 Requires Docker Desktop with its Linux engine running.
