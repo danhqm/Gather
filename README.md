@@ -193,3 +193,6 @@ Stopping the instance takes the demo offline and preserves its attached storage.
 - Automated off-instance backups, CI/CD, and cloud monitoring remain future work.
 - Next deployment steps are configuring and verifying hosted Stripe sandbox checkout and OpenAI search, then publishing the launch film.
 
+## GATHER
+
+https://github.com/user-attachments/assets/6baf3311-70c0-48d7-968c-fad3aef5b8af
