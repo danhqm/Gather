@@ -4,6 +4,7 @@
 **/dist
 .git
 .env
+.env.*
 **/.keys
 .superpowers
 **/test-results

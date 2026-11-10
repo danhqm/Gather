@@ -8,15 +8,16 @@ public static class EventEndpoints
     public static void MapEventEndpoints(this WebApplication app)
     {
         app.MapGet("/api/events", async (string? category, string? city, string? currency,
-            long? maxPriceMinor, DateTimeOffset? from, DateTimeOffset? to, int? page, int? pageSize,
+            long? maxPriceMinor, DateTimeOffset? from, DateTimeOffset? to, int? page, int? pageSize, string? keywords,
             EventQuery query, CancellationToken ct) =>
         {
             if (page is < 1 or > 10000 || pageSize is < 1 or > 100 || maxPriceMinor is < 0
                 || category?.Length > 40 || city?.Length > 100 || currency is not null && currency.Length != 3
-                || maxPriceMinor.HasValue && currency is null || from.HasValue && to.HasValue && from >= to)
+                || maxPriceMinor.HasValue && currency is null || from.HasValue && to.HasValue && from >= to
+                || keywords?.Length > 80 || keywords is not null && keywords.Any(char.IsControl))
                 return Results.Problem("Invalid filters: check price, currency, date range and pagination.", statusCode: 400);
             return Results.Ok(await query.ListAsync(new(category, city, currency?.ToUpperInvariant(),
-                maxPriceMinor, from?.ToUniversalTime(), to?.ToUniversalTime(), page ?? 1, pageSize ?? 12), ct));
+                maxPriceMinor, from?.ToUniversalTime(), to?.ToUniversalTime(), page ?? 1, pageSize ?? 12, keywords), ct));
         });
         app.MapGet("/api/events/{eventId:guid}", async (Guid eventId, AppDbContext db, CancellationToken ct) =>
         {

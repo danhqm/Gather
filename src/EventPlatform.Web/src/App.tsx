@@ -6,10 +6,15 @@ import { AuthControls } from './features/auth/AuthControls';
 import { EventDashboard } from './features/organiser/EventDashboard';
 import { ReservationPanel } from './features/booking/ReservationPanel';
 import { BookingStatusPage } from './features/booking/BookingStatusPage';
+import { MyTicketsPage } from './features/tickets/MyTicketsPage';
+import { CheckInPage } from './features/tickets/CheckInPage';
+import { AiSearchBox } from './features/search/AiSearchBox';
+import { DiscoveryHero } from './features/discovery/DiscoveryHero';
 
 const categories = [ ['all', 'Everything'], ['music', 'Music'], ['workshop', 'Workshops'],
   ['arts', 'Arts & culture'], ['food', 'Food & drink'], ['community', 'Community'] ];
-const initialFilters = { city: '', maxPrice: '', from: '', to: '' };
+const initialFilters = { city: '', maxPrice: '', from: '', to: '', keywords: '' };
+const presetPrices = ['', '0', '3000', '5000', '10000'];
 const posterText: Record<string, [string, string]> = {
   workshop: ['MADE', 'BY YOU.'], music: ['SIDE', 'B.'], community: ['GOOD', 'COMPANY.'],
   food: ['COME', 'HUNGRY.'], arts: ['OFF', 'THE PRESS.'],
@@ -50,6 +55,7 @@ function CataloguePage() {
       const params = new URLSearchParams({ page: String(page), pageSize: '6' });
       if (category !== 'all') params.set('category', category);
       if (filters.city) params.set('city', filters.city);
+      if (filters.keywords.trim()) params.set('keywords', filters.keywords.trim());
       if (filters.maxPrice) { params.set('maxPriceMinor', filters.maxPrice); params.set('currency', 'MYR'); }
       if (filters.from || filters.to) {
         // Calendar days belong to the event city, not the visitor's computer timezone.
@@ -86,25 +92,31 @@ function CataloguePage() {
 
   return <>
     <a className="skip-link" href="#events">Skip to events</a>
-    <header className="site-header"><a className="wordmark" href="/" aria-label="Gather home">gather<span>✳</span></a>
+    <header className="site-header home-header"><a className="wordmark" href="/" aria-label="Gather home">gather<span>✳</span></a>
       <nav aria-label="Main"><a href="#events">Discover events <span aria-hidden="true">↗</span></a></nav>
       <span className="demo-label">PORTFOLIO DEMO</span>
       <AuthControls signInRequest={signInRequest} onSessionChange={() => {
         if (returnToEvent.current) { setSelected(returnToEvent.current); returnToEvent.current = undefined; }
       }} />
     </header>
-    <main>
-      <section className="hero" aria-labelledby="hero-title">
-        <div className="eyebrow"><span className="tiny-square" /> LESS SCROLLING. MORE SHOWING UP.</div>
-        <div className="hero-row"><h1 id="hero-title">Find your next<br /><em>good plan.</em></h1>
-          <div className="hero-aside"><span className="asterisk" aria-hidden="true">✳</span>
-            <p>Small gatherings. Shared interests.<br />A reason to step outside.</p><a href="#events">Explore what’s happening <span aria-hidden="true">↓</span></a></div>
-        </div>
-        <div className="edition"><span>THE LOCAL EDITION</span><span>KUALA LUMPUR & GEORGE TOWN</span><span>NOVEMBER 2026</span></div>
-      </section>
-
+    <main className="home-shell">
+      <DiscoveryHero />
+      <div className="catalogue-surface">
       <section id="events" className="catalogue" aria-labelledby="events-title">
-        <div className="section-heading"><h2 id="events-title">Out there, waiting for you.</h2><span>01 / DISCOVER</span></div>
+        <div className="section-heading">
+          <span className="eyebrow"><i aria-hidden="true" /> The event guide</span>
+          <h2 id="events-title">Find your next plan.</h2>
+          <p>Browse what’s on or describe the kind of event you’d like to find.</p>
+        </div>
+        <AiSearchBox city={draft.city} onApply={({ filter, from, through }) => {
+          if (!filter) return;
+          const next = { city: filter.city ?? '', maxPrice: filter.maxPriceMinor?.toString() ?? '',
+            from: from ?? '', to: through ?? '', keywords: filter.keywords ?? '' };
+          setCategory(filter.category ?? 'all');
+          setDraft(next);
+          setFilters(next);
+          setPage(1);
+        }} />
         <div className="category-tabs" role="group" aria-label="Event category">{categories.map(([id, label]) =>
           <button key={id} className={category === id ? 'active' : ''} aria-pressed={category === id}
             onClick={() => { setCategory(id); setPage(1); }}>{label}</button>)}</div>
@@ -113,16 +125,22 @@ function CataloguePage() {
             <option value="">All cities</option><option>Kuala Lumpur</option><option>George Town</option></select></div>
           <div className="filter-field"><label htmlFor="price-filter">Price</label><select id="price-filter" value={draft.maxPrice} onChange={e => setDraft({ ...draft, maxPrice: e.target.value })}>
             <option value="">Any price</option><option value="0">Free</option><option value="3000">Up to RM 30</option>
-            <option value="5000">Up to RM 50</option><option value="10000">Up to RM 100</option></select></div>
+            <option value="5000">Up to RM 50</option><option value="10000">Up to RM 100</option>
+            {!presetPrices.includes(draft.maxPrice) && <option value={draft.maxPrice}>
+              Up to RM {(Number(draft.maxPrice) / 100).toFixed(2)}
+            </option>}</select></div>
           <label>From<input type="date" value={draft.from} onChange={e => setDraft({ ...draft, from: e.target.value })} /></label>
           <label>Through<input type="date" value={draft.to} min={draft.from || undefined} onChange={e => setDraft({ ...draft, to: e.target.value })} /></label>
           <button className="primary" type="submit">Find events <span aria-hidden="true">↗</span></button>
+          {(draft.keywords || filters.keywords) && <label className="keyword-filter">Keywords
+            <input value={draft.keywords} maxLength={80} onChange={e => setDraft({ ...draft, keywords: e.target.value })} />
+          </label>}
         </form>
         <div className="results-meta"><span role="status">{loading ? 'Finding your next plan…' : error ? 'Events unavailable' : `${result?.total ?? 0} events to make time for`}</span>
           <button className="text-button" onClick={reset}>Clear filters</button></div>
         {error ? <div className="empty-state" role="alert"><h3>A small interruption.</h3><p>{error}</p><button className="primary" onClick={() => setReload(reload + 1)}>Try again</button></div>
-          : loading ? <div className="loading-state" aria-hidden="true">Gathering the good stuff<span>…</span></div>
-          : !result?.items.length ? <div className="empty-state"><h3>No plans here. Yet.</h3><p>Try another category, city or date.</p><button className="primary" onClick={reset}>See all events</button></div>
+          : loading ? <div className="event-grid skeleton-grid" aria-hidden="true">{[1, 2, 3].map(item => <div className="event-skeleton" key={item}><div /><span /><span /></div>)}</div>
+          : !result?.items.length ? <div className="empty-state"><h3>No plans here. Yet.</h3><p>Try a different category, city, price or date.</p><button className="primary" onClick={reset}>See all events</button></div>
           : <div className="event-grid">{result.items.map(event => <article className="event-card" key={event.id}>
             <button className="event-link" onClick={() => setSelected(event.id)} aria-label={`View ${event.title}`}>
               <Poster event={event} /><div className="card-meta"><span>{event.category}</span><span>{date(event, { weekday: 'short', day: 'numeric', month: 'short' })}</span></div>
@@ -136,7 +154,8 @@ function CataloguePage() {
           <button disabled={page * result.pageSize >= result.total} onClick={() => setPage(page + 1)}>Next</button>
         </nav>}
       </section>
-      <aside className="closing-note"><span aria-hidden="true">↗</span><p>The best part of a plan?<br /><em>The people you meet there.</em></p><span>SEE YOU OUT THERE.</span></aside>
+      </div>
+      <aside className="closing-note"><p>See you <em>out there.</em></p><a className="primary" href="#events">Find a gathering <span aria-hidden="true">↑</span></a></aside>
     </main>
     <footer><a className="wordmark" href="/">gather<span>✳</span></a><p>Fictional events. Demo reservations only.</p><span>MADE FOR SHOWING UP.</span></footer>
     <dialog ref={dialog} onClose={() => setSelected(undefined)} aria-labelledby="detail-title">
@@ -154,6 +173,8 @@ function CataloguePage() {
 }
 
 export default function App() {
+  if (window.location.pathname === '/tickets') return <MyTicketsPage />;
+  if (window.location.pathname === '/check-in') return <CheckInPage />;
   const booking = window.location.pathname.match(/^\/bookings\/([0-9a-f-]{36})$/i);
   if (booking) return <BookingStatusPage bookingId={booking[1]} />;
   return window.location.pathname === '/organiser' ? <EventDashboard /> : <CataloguePage />;

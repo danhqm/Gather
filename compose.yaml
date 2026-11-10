@@ -24,6 +24,8 @@ services:
       Database__Initialize: "true"
       Demo__Seed: "true"
       Demo__AccountPassword: ${DEMO_ACCOUNT_PASSWORD:-}
+      OpenAI__Enabled: ${OPENAI_SEARCH_ENABLED:-false}
+      OpenAI__ApiKey: ${OPENAI_API_KEY:-}
       DataProtection__KeyPath: /app/keys
       Payments__ApiKey: ${STRIPE_API_KEY:-}
       Payments__WebhookSecret: ${STRIPE_WEBHOOK_SECRET:-}

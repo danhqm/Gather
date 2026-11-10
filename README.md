@@ -1,10 +1,8 @@
 # Gather
 
-A portfolio event platform. The first milestone is a working, database-backed event catalogue: browse fictional events, filter by category/city/price/local dates, and open an event's details.
+A full-stack event platform for discovering local events, booking tickets, and checking attendees in at the door. Browse by category, city, price, and date, or describe what you're looking for in plain language.
 
-**Implemented:** ASP.NET Core 10 API, EF Core migrations, PostgreSQL 18, React/TypeScript/Vite frontend, Docker Compose, customer signup/sign-in, organisation permissions, organiser event management, capacity-safe reservations, free booking confirmation, a sandbox payment adapter, PostgreSQL integration tests and browser smoke tests.
-
-**Planned:** real Stripe sandbox verification, QR admission, OpenAI-assisted search and AWS deployment. These are not available yet. This demo does not accept real bookings.
+Gather uses React and TypeScript with an ASP.NET Core 10 API and PostgreSQL 18. It includes organiser event management, capacity-safe reservations, Stripe sandbox checkout, QR and manual check-in, and OpenAI-assisted search. This repository contains the local demo. AWS deployment is planned.
 
 ## Run locally
 
@@ -25,7 +23,7 @@ To see startup errors: `docker compose logs app`. To check database connectivity
 
 ## Develop without rebuilding Docker
 
-Use .NET 10 SDK and a Node version supported by Vite (Node 22.12+). The .NET SDK installed for this workspace is under `../../work/runtime/dotnet`; the system `dotnet` currently points to .NET 9.
+Use the .NET 10 SDK and Node 24 LTS.
 
 Start only PostgreSQL with `docker compose up -d postgres`. In one PowerShell terminal:
 
@@ -103,5 +101,14 @@ PostgreSQL event-row locks serialize capacity changes. Expired holds stop counti
 
 ## Sandbox checkout status
 
-The payment pipeline and booking status page are implemented and covered by 41 API tests and 18 browser checks. Free events can be confirmed locally. The real Stripe sandbox journey has **not** been verified: local credentials and a webhook listener are still needed. See [sandbox setup](docs/stripe-sandbox.md). No live payments are supported.
+The local Stripe sandbox smoke test confirmed a paid test booking and issued a ticket. Staff verified manual and camera admission, including rejection of a repeated manual check-in. See [sandbox setup](docs/stripe-sandbox.md).
 
+## AI event search
+
+Signed-in users can describe an event in plain language. Gather uses OpenAI to propose filters, validates the result, then runs the usual PostgreSQL catalogue search. Users can edit the filters and search manually at any time.
+
+To enable locally, set `OPENAI_API_KEY` and `OPENAI_SEARCH_ENABLED=true` in the ignored `.env`, then run `docker compose up --build -d app`. Keep the key in backend configuration. The app uses GPT-6 Luna with [OpenAI Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=responses).
+
+The database counts all outbound attempts, including retries, against 20 per user and 100 across the app per UTC day. It reserves one cent per attempt, adjusts known costs using reported tokens at standard rates, and stops new attempts at a cumulative US$8 allowance. Unknown usage keeps its full reservation. This allowance covers this app's own requests.
+
+From `src/EventPlatform.Web`, run `node eval-search.mjs --live` for one live smoke case. Add `--all` to run the 20 labelled cases. The runner uses a separate local demo account and the same allowance as the app. Start with the smoke case before using API credits for the full evaluation.

@@ -3,6 +3,8 @@ using EventPlatform.Api.Auth;
 using EventPlatform.Api.Events;
 using EventPlatform.Api.Bookings;
 using EventPlatform.Api.Payments;
+using EventPlatform.Api.Tickets;
+using EventPlatform.Api.Search;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +14,15 @@ builder.Services.AddDbContext<AppDbContext>((services, options) => options.UseNp
     ?? throw new InvalidOperationException("Set ConnectionStrings__Database before starting the API.")));
 builder.Services.AddScoped<EventQuery>();
 builder.Services.AddScoped<EventManagement>();
+builder.Services.AddOptions<SearchOptions>().BindConfiguration("OpenAI");
+builder.Services.AddSingleton<SearchCache>();
+builder.Services.AddScoped<ISearchUsage, SearchUsage>();
+builder.Services.AddScoped<OpenAiEventSearch>();
+builder.Services.AddHttpClient(OpenAiEventSearch.ClientName, client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(8);
+    client.MaxResponseContentBufferSize = 64 * 1024;
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
 builder.Services.AddScoped<ReservationService>();
 builder.Services.AddOptions<PaymentOptions>().BindConfiguration("Payments")
     .Validate(options => string.IsNullOrEmpty(options.ApiKey) || options.ApiKey.StartsWith("rk_test_") || options.ApiKey.StartsWith("sk_test_"),
@@ -25,6 +36,8 @@ builder.Services.AddScoped<CheckoutService>();
 builder.Services.AddScoped<PaymentConfirmation>();
 builder.Services.AddScoped<RefundProcessor>();
 builder.Services.AddHostedService<RefundWorker>();
+builder.Services.AddSingleton<TicketCode>();
+builder.Services.AddScoped<CheckInService>();
 builder.Services.AddOptions<ReservationOptions>().BindConfiguration("Reservations")
     .Validate(options => options.HoldMinutes is >= 1 and <= 60, "HoldMinutes must be between 1 and 60.").ValidateOnStart();
 builder.Services.AddHostedService<ReservationExpiryWorker>();
@@ -54,6 +67,8 @@ app.MapAuthEndpoints();
 app.MapOrganiserEndpoints();
 app.MapBookingEndpoints();
 app.MapPaymentEndpoints();
+app.MapTicketEndpoints();
+app.MapSearchEndpoints();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.MapFallbackToFile("index.html");

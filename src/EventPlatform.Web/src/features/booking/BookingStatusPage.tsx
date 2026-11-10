@@ -40,7 +40,7 @@ export function BookingStatusPage({ bookingId }: { bookingId: string }) {
         <dl className="booking-facts"><div><dt>Admissions</dt><dd>{booking.quantity}</dd></div>
           <div><dt>Total</dt><dd>{new Intl.NumberFormat('en-MY', { style: 'currency', currency: booking.currency }).format(booking.totalMinor / 100)}</dd></div>
           <div><dt>Booking reference</dt><dd className="booking-reference">{booking.bookingId}</dd></div></dl>
-        {booking.state === 'Confirmed' && <p>Your demo booking is confirmed. Ticket delivery will appear here when admission tickets are enabled.</p>}
+        {booking.state === 'Confirmed' && <><p>Your demo booking is confirmed. Bring your QR ticket for admission.</p><p className="booking-actions"><a className="primary" href="/tickets">View my tickets ↗</a></p></>}
         {booking.state === 'Held' && <><p>Checkout returns do not confirm payment. This page updates when payment confirmation arrives.</p><CheckoutButton booking={booking} /></>}
         {booking.state === 'PaymentReview' && <p>Tickets were not issued. A refund has been queued for review or processing; don’t pay again for this booking.</p>}
         {booking.state === 'Expired' && <p>This hold has expired. If you completed sandbox checkout, wait for payment confirmation before making another booking.</p>}

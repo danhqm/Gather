@@ -50,6 +50,8 @@ export function AuthControls({ onSessionChange, signInRequest = 0 }: { onSession
   }
 
   return <div className="auth-controls">
+    {session && <a className="organiser-link" href="/tickets">My tickets</a>}
+    {session?.memberships.some(m => ['Organiser', 'CheckInStaff'].includes(m.role)) && <a className="organiser-link" href="/check-in">Check in</a>}
     {session?.memberships.some(m => m.role === 'Organiser') && <a className="organiser-link" href="/organiser">Manage events</a>}
     {session ? <><span className="account-name" title={session.displayName}>{session.displayName}</span>
       <button className="account-button" disabled={pending} onClick={logout}>Sign out</button></>

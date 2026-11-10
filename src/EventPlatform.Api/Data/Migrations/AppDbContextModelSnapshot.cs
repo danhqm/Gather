@@ -374,10 +374,40 @@ namespace EventPlatform.Api.Data.Migrations
                     b.ToTable("RefundJobs");
                 });
 
+            modelBuilder.Entity("EventPlatform.Api.Search.SearchAttempt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("CostMicroUsd")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.ToTable("SearchAttempts");
+                });
+
             modelBuilder.Entity("EventPlatform.Api.Tickets.Ticket", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("AdmittedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("AdmittedBy")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("BookingId")
@@ -390,6 +420,8 @@ namespace EventPlatform.Api.Data.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AdmittedBy");
 
                     b.HasIndex("BookingId", "Number")
                         .IsUnique();
@@ -600,6 +632,11 @@ namespace EventPlatform.Api.Data.Migrations
 
             modelBuilder.Entity("EventPlatform.Api.Tickets.Ticket", b =>
                 {
+                    b.HasOne("EventPlatform.Api.Auth.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("AdmittedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("EventPlatform.Api.Bookings.Booking", null)
                         .WithMany()
                         .HasForeignKey("BookingId")

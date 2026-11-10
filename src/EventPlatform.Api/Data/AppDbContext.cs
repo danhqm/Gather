@@ -3,6 +3,7 @@ using EventPlatform.Api.Auth;
 using EventPlatform.Api.Bookings;
 using EventPlatform.Api.Payments;
 using EventPlatform.Api.Tickets;
+using EventPlatform.Api.Search;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -17,12 +18,15 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<ProcessedWebhook> ProcessedWebhooks => Set<ProcessedWebhook>();
     public DbSet<RefundJob> RefundJobs => Set<RefundJob>();
     public DbSet<Ticket> Tickets => Set<Ticket>();
+    public DbSet<SearchAttempt> SearchAttempts => Set<SearchAttempt>();
     public DbSet<Organisation> Organisations => Set<Organisation>();
     public DbSet<OrganisationMembership> OrganisationMemberships => Set<OrganisationMembership>();
 
     protected override void OnModelCreating(ModelBuilder model)
     {
         base.OnModelCreating(model);
+        model.Entity<SearchAttempt>().HasIndex(attempt => attempt.CreatedAt);
+        model.Entity<SearchAttempt>().HasIndex(attempt => new { attempt.UserId, attempt.CreatedAt });
         var attempt = model.Entity<PaymentAttempt>();
         attempt.HasKey(p => p.BookingId);
         attempt.HasOne<Booking>().WithOne().HasForeignKey<PaymentAttempt>(p => p.BookingId).OnDelete(DeleteBehavior.Restrict);
@@ -45,6 +49,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
         refund.Property(p => p.State).HasMaxLength(24);
         var ticket = model.Entity<Ticket>();
         ticket.HasOne<Booking>().WithMany().HasForeignKey(t => t.BookingId).OnDelete(DeleteBehavior.Restrict);
+        ticket.HasOne<ApplicationUser>().WithMany().HasForeignKey(t => t.AdmittedBy).OnDelete(DeleteBehavior.Restrict);
         ticket.HasIndex(t => new { t.BookingId, t.Number }).IsUnique();
         ticket.ToTable(t => t.HasCheckConstraint("CK_Ticket_Number", "\"Number\" BETWEEN 1 AND 4"));
         var booking = model.Entity<Booking>();
