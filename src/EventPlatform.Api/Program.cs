@@ -5,7 +5,9 @@ using EventPlatform.Api.Bookings;
 using EventPlatform.Api.Payments;
 using EventPlatform.Api.Tickets;
 using EventPlatform.Api.Search;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddProblemDetails();
@@ -44,6 +46,17 @@ builder.Services.AddHostedService<ReservationExpiryWorker>();
 builder.AddAccounts();
 var app = builder.Build();
 app.UseExceptionHandler();
+if (app.Configuration["ReverseProxy:Address"] is { } reverseProxy)
+{
+    var forwarded = new ForwardedHeadersOptions
+    {
+        ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+    };
+    forwarded.KnownIPNetworks.Clear();
+    forwarded.KnownProxies.Clear();
+    forwarded.KnownProxies.Add(IPAddress.Parse(reverseProxy));
+    app.UseForwardedHeaders(forwarded);
+}
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
